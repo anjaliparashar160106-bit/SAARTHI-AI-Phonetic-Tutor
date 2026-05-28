@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>सारथी - अभ्यास करें</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-yellow-50 flex items-center justify-center h-screen flex-col relative px-4">
+
+    <div id="backend-current-level" class="hidden">{{ current_level }}</div>
+    <div id="backend-next-item" class="hidden">{{ data.next }}</div>
+    <div id="backend-sounds" class="hidden">{% if data.sounds %}{{ data.sounds | tojson }}{% else %}[]{% endif %}</div>
+    <div id="backend-audio-l1" class="hidden">{{ data.audio }}</div>
+    <div id="backend-audio-l23" class="hidden">{{ data.audio_hint }}</div>
+
+    <div class="w-full max-w-md px-4 mb-4 flex justify-between items-center">
+        <a href="/" class="text-blue-600 font-bold text-lg hover:underline">← बाहर निकलें (Home)</a>
+        <span id="level-badge" class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase">
+            अभ्यास मोड
+        </span>
+    </div>
+
+    <div class="bg-white p-8 rounded-2xl shadow-lg text-center w-11/12 max-w-md relative">
+        
+        <div id="display-trigger-zone" class="cursor-pointer title-zone select-none" title="Double click to instant pass">
+            {% if current_level == 'level2' %}
+                <p class="text-xs font-bold text-purple-500 uppercase tracking-widest mb-1">इस शब्द को बोलें (Speak this word)</p>
+                <h1 id="target-display" class="text-6xl font-black text-blue-600 mb-2">{{ data.example }}</h1>
+                <div class="text-4xl font-bold text-orange-500 mb-4">मात्रा ध्वनि: "{{ data.display }}"</div>
+            {% else %}
+                <h1 id="target-display" class="text-8xl font-black text-blue-600 mb-6">{{ letter if current_level == 'level1' else data.display }}</h1>
+            {% endif %}
+        </div>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-xl py-3 px-4 mb-4">
+            <p class="text-md text-gray-600 font-medium">हिंदी अनुवाद (Translation Guide)</p>
+            <p class="text-xl font-bold text-blue-800 mt-1">
+                {% if current_level == 'level1' %}
+                    '{{ letter }}' का हिंदी अनुवाद <span class="text-green-600 text-2xl font-black">"{{ data.hindi }}"</span> है।
+                {% elif current_level == 'level2' %}
+                    इस मात्रा का अंग्रेजी रूपांतरण <span class="text-green-600 text-2xl font-black">'{{ data.english_map }}'</span> अक्षर से होता है।
+                {% else %}
+                    शब्द <span class="text-green-600 text-2xl font-black">"{{ data.display }}"</span> का हिंदी मतलब '{{ data.hindi }}' है।
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="bg-amber-50 border border-amber-200 rounded-xl py-3 px-4 mb-8">
+            <p class="text-md text-gray-600 font-medium">बोलने का तरीका (Speaking Sound)</p>
+            <p class="text-lg font-semibold text-amber-900 mt-1">
+                {% if current_level == 'level1' %}
+                    इसे अंग्रेजी में <span class="text-orange-600 text-xl font-bold">"{{ data.audio }}"</span> की तरह साफ बोलें।
+                {% elif current_level == 'level2' %}
+                    इस शब्द में मात्रा को <span class="text-orange-600 text-xl font-bold">"{{ data.audio_hint }}"</span> स्वर में खींचें।
+                {% else %}
+                    इसे साफ आवाज में <span class="text-orange-600 text-xl font-bold">"{{ data.audio_hint }}"</span> पुकारें।
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="flex flex-col gap-4">
+            <button id="listen-btn" class="w-full bg-orange-400 hover:bg-orange-500 text-white text-xl font-bold py-4 rounded-xl shadow-md flex items-center justify-center gap-2 transition-all">
+                🔊 पहले आवाज सुनें
+            </button>
+            <button id="mic-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold py-4 rounded-xl shadow-md flex items-center justify-center gap-2 transition-all">
+                🎙️ बटन दबाकर बोलें
+            </button>
+        </div>
+
+        <p id="result-text" class="mt-6 text-sm font-semibold text-blue-500">
+            💡 <span class="text-gray-400">Tip: Spacebar दबाकर भी चेक कर सकते हैं</span>
+        </p>
+    </div>
+
+    <div id="reward-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl p-8 text-center max-w-sm w-full shadow-2xl border-4 border-green-500">
+            <h2 class="text-4xl font-black text-green-600 mb-2">बहुत बढ़िया! 🎉</h2>
+            <p class="text-gray-600 font-medium text-md mb-6">आपने बिल्कुल सही बोला है।</p>
+            
+            <div class="flex justify-center gap-2 text-5xl mb-8 animate-bounce">
+                <span>⭐</span><span>⭐</span><span>⭐</span>
+            </div>
+
+            <a id="modal-next-btn" href="#" class="w-full bg-green-500 hover:bg-green-600 text-white text-xl font-bold py-4 rounded-xl block shadow-lg">
+                अगला शब्द सीखें ➡️
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const listenBtn = document.getElementById('listen-btn');
+        const micBtn = document.getElementById('mic-btn');
+        const resultText = document.getElementById('result-text');
+        const rewardModal = document.getElementById('reward-modal');
+        const modalNextBtn = document.getElementById('modal-next-btn');
+        const displayTriggerZone = document.getElementById('display-trigger-zone');
+
+        const currentLevel = document.getElementById('backend-current-level').innerText.trim();
+        const nextItem = document.getElementById('backend-next-item').innerText.trim();
+        const validSounds = JSON.parse(document.getElementById('backend-sounds').innerText.trim());
+        
+        let textToSpeak = "";
+        if (currentLevel === 'level1') {
+            textToSpeak = document.getElementById('backend-audio-l1').innerText.trim();
+        } else {
+            textToSpeak = document.getElementById('backend-audio-l23').innerText.trim();
+        }
+
+        document.getElementById('level-badge').innerText = currentLevel === 'level1' ? 'लेवल 1: अक्षर' : (currentLevel === 'level2' ? 'लेवल 2: मात्रा' : 'लेवल 3: शब्द');
+
+        // 1. TEXT-TO-SPEECH CONTROL ENGINE
+        listenBtn.addEventListener('click', () => {
+            window.speechSynthesis.cancel();
+            const speech = new SpeechSynthesisUtterance(textToSpeak);
+            speech.lang = 'hi-IN'; 
+            speech.rate = 0.6;     
+            speech.volume = 1.0;   
+            window.speechSynthesis.speak(speech);
+        });
+
+        // 2. WEB SPEECH ENGINE ROUTINE
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let isMatched = false;
+
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-IN';        
+            recognition.continuous = false;     
+            recognition.interimResults = true;  
+
+            micBtn.addEventListener('click', () => {
+                isMatched = false;
+                window.speechSynthesis.cancel();
+                try {
+                    recognition.start(); 
+                    micBtn.innerText = "सून रहे हैं... बोलिए 🎙️"; 
+                    micBtn.classList.replace('bg-blue-500', 'bg-red-500'); 
+                    resultText.innerHTML = "बोलिए, सारथी सुन रहा है...";
+                } catch(e) {
+                    recognition.stop();
+                    setTimeout(() => { recognition.start(); }, 50);
+                }
+            });
+
+            recognition.onresult = (event) => {
+                if (isMatched) return;
+                let spokenWord = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    spokenWord += event.results[i][0].transcript;
+                }
+                spokenWord = spokenWord.toLowerCase().trim();
+                
+                let matchFound = validSounds.some(sound => spokenWord.includes(sound));
+                if (matchFound) {
+                    triggerSuccessState();
+                }
+            };
+
+            recognition.onspeechend = () => { recognition.stop(); };
+            recognition.onend = () => { resetMicButtonState(); };
+            recognition.onerror = () => { resetMicButtonState(); };
+        }
+
+        // 3. SECURE FAIL-SAFE BYPASS TRIGGER SYSTEMS FOR PRACTICAL EXAMS
+        // Trigger A: Press Spacebar to pass instantly
+        window.addEventListener('keydown', (event) => {
+            if (event.code === 'Space' && !isMatched) {
+                event.preventDefault(); // Stop standard browser page scrolling
+                triggerSuccessState();
+            }
+        });
+
+        // Trigger B: Double click the display title block elements to pass instantly
+        displayTriggerZone.addEventListener('dblclick', () => {
+            if (!isMatched) {
+                triggerSuccessState();
+            }
+        });
+
+        // Execution module routing calculations to push updates to progress loops
+        function triggerSuccessState() {
+            isMatched = true;
+            window.speechSynthesis.cancel();
+            
+            if(SpeechRecognition) {
+                try { window.webkitSpeechRecognition.stop(); } catch(e){}
+            }
+
+            resetMicButtonState();
+
+            // Compute database persistence links
+            if (nextItem === 'DONE') {
+                modalNextBtn.href = "/level/DONE";
+                localStorage.setItem('saarthi_unlocked', 'DONE');
+            } else if (nextItem === 'L2_DONE') {
+                modalNextBtn.href = "/level/DONE";
+                localStorage.setItem('saarthi_l2_unlocked', 'L2_DONE');
+            } else if (nextItem === 'L3_PHASE_A_DONE') {
+                modalNextBtn.href = "/level/DONE";
+                localStorage.setItem('saarthi_l3a_unlocked', 'L3_PHASE_A_DONE');
+            } else if (nextItem === 'L3_COMPLETE') {
+                modalNextBtn.href = "/level/DONE";
+                localStorage.setItem('saarthi_l3b_unlocked', 'L3_COMPLETE');
+            } else {
+                if (currentLevel === 'level1') {
+                    modalNextBtn.href = "/level/" + nextItem;
+                    localStorage.setItem('saarthi_unlocked', nextItem);
+                } else if (currentLevel === 'level2') {
+                    modalNextBtn.href = "/matra/" + nextItem;
+                    localStorage.setItem('saarthi_l2_unlocked', nextItem);
+                } else {
+                    modalNextBtn.href = "/word/" + nextItem;
+                    if(nextItem.startsWith('H_')) localStorage.setItem('saarthi_l3a_unlocked', nextItem);
+                    else localStorage.setItem('saarthi_l3b_unlocked', nextItem);
+                }
+            }
+
+            rewardModal.classList.remove('hidden');
+            resultText.classList.add('hidden');
+        }
+
+        function resetMicButtonState() {
+            micBtn.innerHTML = '🎙️ बटन दबाकर बोलें';
+            micBtn.classList.replace('bg-red-500', 'bg-blue-500');
+        }
+    </script>
+</body>
+</html>
