@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>सारथी - होम पेज</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-yellow-50 flex items-center justify-center min-h-screen py-10 px-4">
+
+    <div class="bg-white p-8 rounded-2xl shadow-lg text-center w-11/12 max-w-3xl">
+        <h1 class="text-5xl font-bold text-blue-600 mb-2">सारथी</h1>
+        <p class="text-gray-600 mb-8 text-xl font-medium">अंग्रेजी सीखें, बिल्कुल आसान तरीके से 🚀</p>
+
+        <div class="mb-10 text-left">
+            <h2 class="text-xl font-bold text-gray-700 mb-4 border-b pb-2">📍 लेवल 1: ए से जेड तक अक्षर (A to Z)</h2>
+            <div id="letter-grid" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 gap-3"></div>
+        </div>
+
+        <div class="mb-10 text-left">
+            <h2 class="text-xl font-bold text-gray-700 mb-4 border-b pb-2">📍 लेवल 2: हिंदी मात्राओं की आवाजें (12 Matras)</h2>
+            <div id="matra-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
+        </div>
+
+        <div class="mb-10 text-left">
+            <h2 class="text-xl font-bold text-gray-700 mb-4 border-b pb-2">📍 लेवल 3 (भाग १): हिंदी शब्द इंग्लिश अक्षरों में (Hinglish Words)</h2>
+            <div id="hinglish-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
+        </div>
+
+        <div class="text-left">
+            <h2 class="text-xl font-bold text-gray-700 mb-4 border-b pb-2">📍 लेवल 3 (भाग २): रोज काम आने वाले इंग्लिश शब्द (English Words)</h2>
+            <div id="english-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
+        </div>
+
+        <button onclick="resetGame()" class="mt-12 text-red-500 underline text-sm hover:text-red-700 font-medium block mx-auto">
+            🔄 सब कुछ शुरू से शुरू करें (Reset Progress)
+        </button>
+    </div>
+
+    <script>
+        // Fetch tracking states from local storage registry (Defaults applied if data is missing)
+        let l1_unlocked = localStorage.getItem('saarthi_unlocked') || 'A';
+        let l2_unlocked = localStorage.getItem('saarthi_l2_unlocked') || 'A_SOUND';
+        let l3a_unlocked = localStorage.getItem('saarthi_l3a_unlocked') || 'H_BUS';
+        let l3b_unlocked = localStorage.getItem('saarthi_l3b_unlocked') || 'E_IN';
+
+        // ---------------------------------------------------------------------
+        // 1. GENERATE LEVEL 1 GRID: Renders letters A-Z dynamically
+        // ---------------------------------------------------------------------
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const letterGrid = document.getElementById('letter-grid');
+        for(let i=0; i<26; i++) {
+            let char = alphabet[i];
+            
+            // Unlocked if progress is DONE, or if current index is below tracking state
+            let isUnlocked = (char === 'A' || l1_unlocked === 'DONE' || (i <= alphabet.indexOf(l1_unlocked)));
+            let btn = document.createElement('button');
+            
+            if(isUnlocked) {
+                btn.className = "flex items-center justify-center h-12 bg-green-500 text-white text-xl font-bold rounded-xl shadow-md cursor-pointer block w-full";
+                btn.innerText = char;
+                // Direct redirection path configuration to fix click response issue
+                btn.onclick = function() { window.location.href = "/level/" + char; };
+            } else {
+                btn.className = "flex items-center justify-center h-12 bg-gray-200 text-gray-400 font-bold rounded-xl shadow-inner cursor-not-allowed w-full";
+                btn.innerHTML = `${char} 🔒`;
+                btn.onclick = function() { alert("पहले पुराने अक्षर पूरे करें!"); };
+            }
+            letterGrid.appendChild(btn);
+        }
+
+        // ---------------------------------------------------------------------
+        // 2. GENERATE LEVEL 2 GRID: Vowel mapping markers configuration
+        // ---------------------------------------------------------------------
+        const matras = ['A_SOUND', 'AA_MATRA', 'I_MATRA', 'EE_MATRA', 'U_MATRA', 'OO_MATRA', 'E_MATRA', 'AI_MATRA', 'O_MATRA', 'AU_MATRA', 'AM_MATRA', 'AHA_MATRA'];
+        const matraLabels = {'A_SOUND':'अ','AA_MATRA':'ा (आ)','I_MATRA':'ि (इ)','EE_MATRA':'ी (ई)','U_MATRA':'ु (उ)','OO_MATRA':'ू (ऊ)','E_MATRA':'े (ए)','AI_MATRA':'ै (ऐ)','O_MATRA':'ो (ओ)','AU_MATRA':'ौ (औ)','AM_MATRA':'ं (अं)','AHA_MATRA':'ः (अः)'};
+        const matraGrid = document.getElementById('matra-grid');
+        matras.forEach((key, idx) => {
+            // Unlocks only if Level 1 is completely DONE and index matches memory trace
+            let isUnlocked = (localStorage.getItem('saarthi_unlocked') === 'DONE') && ((l2_unlocked === 'L2_DONE') || (idx <= matras.indexOf(l2_unlocked)));
+            let btn = document.createElement('button');
+            
+            if(isUnlocked) {
+                btn.className = "flex items-center justify-center h-12 bg-blue-500 text-white font-semibold rounded-xl shadow-md cursor-pointer w-full";
+                btn.innerText = matraLabels[key];
+                btn.onclick = function() { window.location.href = "/matra/" + key; };
+            } else {
+                btn.className = "flex items-center justify-center h-12 bg-gray-200 text-gray-400 rounded-xl shadow-inner cursor-not-allowed w-full";
+                btn.innerHTML = `${matraLabels[key].split(" ")[0]} 🔒`;
+                btn.onclick = function() { alert("यह लेवल अभी बंद है!"); };
+            }
+            matraGrid.appendChild(btn);
+        });
+
+        // ---------------------------------------------------------------------
+        // 3. GENERATE LEVEL 3 PHASE A GRID: Hinglish Word Formation mapping
+        // ---------------------------------------------------------------------
+        const hinglish = ['H_BUS','H_GHAR','H_KAR','H_JAL','H_MAT','H_FAL','H_CHAL','H_MAN','H_TAN','H_DHAN','H_NAAM','H_KAAM','H_PAPA','H_PAANI','H_GAADI','H_DOODH','H_PHOOL','H_KHANA','H_CHAI','H_PAISA'];
+        const hinglishGrid = document.getElementById('hinglish-grid');
+        hinglish.forEach((key, idx) => {
+            // Unlocks when Level 2 is completed entirely (L2_DONE)
+            let isUnlocked = (localStorage.getItem('saarthi_l2_unlocked') === 'L2_DONE') && ((l3a_unlocked === 'L3_PHASE_A_DONE') || (idx <= hinglish.indexOf(l3a_unlocked)));
+            let btn = document.createElement('button');
+            
+            if(isUnlocked) {
+                btn.className = "flex items-center justify-center h-12 bg-orange-400 text-white font-semibold rounded-xl shadow-md cursor-pointer w-full";
+                btn.innerText = key.replace('H_', '');
+                btn.onclick = function() { window.location.href = "/word/" + key; };
+            } else {
+                btn.className = "flex items-center justify-center h-12 bg-gray-200 text-gray-400 rounded-xl shadow-inner cursor-not-allowed w-full";
+                btn.innerHTML = `${key.replace('H_', '')} 🔒`;
+                btn.onclick = function() { alert("यह लेवल अभी बंद है!"); };
+            }
+            hinglishGrid.appendChild(btn);
+        });
+
+        // ---------------------------------------------------------------------
+        // 4. GENERATE LEVEL 3 PHASE B GRID: Functional English Word grid renders
+        // ---------------------------------------------------------------------
+        const english = ['E_IN','E_ON','E_GO','E_UP','E_NO','E_TO','E_MY','E_WE','E_HE','E_YOU','E_OPEN','E_STOP','E_HELP','E_HOME','E_LOCK','E_CALL','E_BANK','E_CASH','E_SHOP','E_MENU'];
+        const englishGrid = document.getElementById('english-grid');
+        english.forEach((key, idx) => {
+            // Unlocks when Phase A Hinglish tier is cleared (L3_PHASE_A_DONE)
+            let isUnlocked = (localStorage.getItem('saarthi_l3a_unlocked') === 'L3_PHASE_A_DONE') && ((l3b_unlocked === 'L3_COMPLETE') || (idx <= english.indexOf(l3b_unlocked)));
+            let btn = document.createElement('button');
+            
+            if(isUnlocked) {
+                btn.className = "flex items-center justify-center h-12 bg-purple-500 text-white font-semibold rounded-xl shadow-md cursor-pointer w-full";
+                btn.innerText = key.replace('E_', '');
+                btn.onclick = function() { window.location.href = "/word/" + key; };
+            } else {
+                btn.className = "flex items-center justify-center h-12 bg-gray-200 text-gray-400 rounded-xl shadow-inner cursor-not-allowed w-full";
+                btn.innerHTML = `${key.replace('E_', '')} 🔒`;
+                btn.onclick = function() { alert("यह Level अभी बंद है!"); };
+            }
+            englishGrid.appendChild(btn);
+        });
+
+        // Clear local cookies registry cache memory to reset layout state
+        function resetGame() {
+            if(confirm("क्या आप सच में अपनी पढ़ाई शुरू से शुरू करना चाहते हैं?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
