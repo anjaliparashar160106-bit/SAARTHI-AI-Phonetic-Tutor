@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>सारथी - बधाई हो!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body class="bg-yellow-50 flex flex-col items-center justify-center min-h-screen text-center" onload="triggerCelebration()">
+
+    <div class="bg-white p-10 rounded-2xl shadow-lg max-w-md w-11/12 border-4 border-green-500">
+        <h1 id="celebration-emoji" class="text-8xl mb-6">🏆</h1>
+        
+        <h1 id="main-heading" class="text-4xl font-bold text-green-600 mb-2">बधाई हो!</h1>
+        
+        <p id="sub-message" class="text-xl text-gray-600 mb-8 font-medium">आपने यह लेवल पार कर लिया है!</p>
+        
+        <a id="action-btn" href="/" class="block w-full bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold py-4 rounded-xl shadow-md transition duration-300">
+            🏠 मुख्य पेज पर जाएं
+        </a>
+    </div>
+
+    <script>
+        // Triggered instantly via hardware lifecycle handler when DOM tree mounts
+        function triggerCelebration() {
+            // Deploy 150 geometric confetti vector particles across a 70-degree arc stream
+            confetti({particleCount: 150, spread: 70});
+
+            // Parse persistent tracking variables from browser's storage matrix keys
+            let l1_status = localStorage.getItem('saarthi_unlocked');
+            let l2_status = localStorage.getItem('saarthi_l2_unlocked');
+            let l3a_status = localStorage.getItem('saarthi_l3a_unlocked');
+            let l3b_status = localStorage.getItem('saarthi_l3b_unlocked');
+
+            // Identify structural elements mapped in the DOM
+            const emoji = document.getElementById('celebration-emoji');
+            const heading = document.getElementById('main-heading');
+            const message = document.getElementById('sub-message');
+            const actionBtn = document.getElementById('action-btn');
+
+            // -----------------------------------------------------------------
+            // STATE CONDITIONAL ROUTER MATRIX: Recalculates interface on tracking variables
+            // -----------------------------------------------------------------
+            if (l1_status === 'DONE' && l2_status !== 'L2_DONE') {
+                // Tier Condition Clear: User finishes Level 1 (A-Z Phonics)
+                emoji.innerText = "🥇";
+                heading.innerText = "लेवल 1 पूरा हुआ! 🎉";
+                message.innerText = "आप ए से जेड (A to Z) तक सभी अक्षर सीख चुके हैं। चलिए अब मात्राओं का अभ्यास करते हैं!";
+                actionBtn.innerText = "लेवल 2: मात्राएं शुरू करें ➡️";
+            } 
+            else if (l2_status === 'L2_DONE' && l3a_status !== 'L3_PHASE_A_DONE') {
+                // Tier Condition Clear: User finishes Level 2 (12 Local Vowel Marks)
+                emoji.innerText = "🥈";
+                heading.innerText = "लेवल 2 पूरा हुआ! 🌟";
+                message.innerText = "आपने सभी 12 मात्राओं की आवाजें सीख ली हैं। अब हम शब्द बनाना सीखेंगे!";
+                actionBtn.innerText = "लेवल 3: शब्द बनाना सीखें ➡️";
+            }
+            else if (l3a_status === 'L3_PHASE_A_DONE' && l3b_status !== 'L3_COMPLETE') {
+                // Tier Condition Clear: User finishes Level 3 Phase A (Hinglish Progression)
+                emoji.innerText = "🥉";
+                heading.innerText = "भाग १ पूरा हुआ! ⚡";
+                message.innerText = "मजा आ गया! आपने हिंदी के शब्दों को इंग्लिश में लिखना सीख लिया। अब चलिए असली इंग्लिश शब्द सीखते हैं!";
+                actionBtn.innerText = "भाग २: इंग्लिश शब्द शुरू करें ➡️";
+            }
+            else {
+                // Grand Finale Tier Condition Clear: User finishes Level 3 Phase B Completely
+                emoji.innerText = "👑";
+                heading.innerText = "पूरा कोर्स खत्म! 🏆";
+                message.innerText = "बहुत-बहुत बधाई! आपने सारथी ऐप के सारे लेवल्स पूरे कर लिए हैं। अब आप बिना डरे पढ़ और बोल सकते हैं!";
+                actionBtn.innerText = "🏠 मुख्य डैशबोर्ड पर जाएं";
+            }
+        }
+    </script>
+</body>
+</html>
